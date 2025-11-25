@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
 
-from src.vit import VisionTransformerClassToken
+from src.vit import VisionTransformer
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
     else:
         device = torch.device("cpu")
 
-    vit = VisionTransformerClassToken(
+    vit = VisionTransformer(
         n_blocks=12,
         patch_size=8,
         n_channels=3,

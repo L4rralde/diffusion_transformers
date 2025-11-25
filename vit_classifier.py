@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
 
-from src.vit import VisionTransformerClassToken
+from src.vit import VisionTransformer
 
 
 class ClassifierHead(nn.Module):
@@ -24,10 +24,10 @@ class ClassifierHead(nn.Module):
         return logits
 
 
-class ViTClassifier(VisionTransformerClassToken):
-    def __init__(self, n_blocks: int, patch_size: int, n_channels: int, dim: int, num_heads: int, mlp_ratio: int) -> None:
-        super().__init__(n_blocks, patch_size, n_channels, dim, num_heads, mlp_ratio)
-        self.classifier_head = ClassifierHead(dim)
+class ViTClassifier(VisionTransformer):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.classifier_head = ClassifierHead(kwargs['dim'])
 
     def forward(self, image: torch.Tensor) -> torch.Tensor:
         preds = super().forward(image)
@@ -75,7 +75,8 @@ def main():
         n_channels=3,
         dim=384,
         num_heads=6,
-        mlp_ratio=2
+        mlp_ratio=2,
+        use_cls_token=True
     ) #ViT-S
     #model = MlpClassifier(3 * 32 * 32)
     model = model.to(device)

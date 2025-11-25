@@ -1,2 +1,1 @@
-from .transformers import VisionTransformerBase as VisionTransformer
-from .transformers import VisionTransformerClassToken
+from .transformers import VisionTransformer

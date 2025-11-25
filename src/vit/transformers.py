@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class VisionTransformerBase(nn.Module):
+class VisionTransformer(nn.Module):
     def __init__(
         self,
         n_blocks: int,
@@ -10,7 +10,8 @@ class VisionTransformerBase(nn.Module):
         n_channels: int,
         dim: int,
         num_heads: int,
-        mlp_ratio: int
+        mlp_ratio: int,
+        use_cls_token: bool=False
     ) -> None:
         super().__init__()
         #Extra token?
@@ -23,46 +24,9 @@ class VisionTransformerBase(nn.Module):
         self.encoder = Encoder(n_blocks, dim, num_heads, mlp_ratio)
         #self.spatial_embedding = sin_cos_embedding(torch.zeros())
 
-    def forward(self, image: torch.Tensor) -> torch.Tensor:
-        #Image of shape B x c x h x w
-        assert len(image.shape) == 4, "Expected image with shape B x c x h x w"
-        batch_size, c, h, w = image.shape
-        assert h%self.patch_size == 0 and w%self.patch_size == 0,\
-                "Image need to be resized to patchify"
-        assert c == self.n_channels, "Number of channels mismatch"
-
-        patches = patchify(image, self.patch_size) #B x n_patches x (c * patch_size^2)
-        patches = self.projection(patches) #B x n_patches x dim
-
-        #Add class token?
-        sincos = sin_cos_embedding(patches)
-        patches += sincos
-        #B x n_patches x dim or B x (n_patches +1) x dim if extra token added
-        tokens = self.encoder(patches)
-
-        return {
-            'tokens': tokens
-        }
-
-class VisionTransformerClassToken(VisionTransformerBase):
-    def __init__(
-        self,
-        n_blocks: int,
-        patch_size: int,
-        n_channels: int,
-        dim: int,
-        num_heads: int,
-        mlp_ratio: int
-    ) -> None:
-        super().__init__(
-            n_blocks,
-            patch_size,
-            n_channels,
-            dim,
-            num_heads,
-            mlp_ratio
-        )
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, dim)) #One token of dimension dim
+        self.use_cls_token = use_cls_token
+        if self.use_cls_token:
+            self.cls_token = nn.Parameter(torch.zeros(1, 1, dim)) #One token of dimension dim
 
     def forward(self, image: torch.Tensor) -> torch.Tensor:
         #Image of shape B x c x h x w
@@ -75,22 +39,23 @@ class VisionTransformerClassToken(VisionTransformerBase):
         patches = patchify(image, self.patch_size) #B x n_patches x (c * patch_size^2)
         patches = self.projection(patches) #B x n_patches x dim
 
-        cls_token = self.cls_token.expand(batch_size, 1, self.dim)
-        patches = torch.cat([cls_token, patches], dim=1)
+        if self.use_cls_token:
+            cls_token = self.cls_token.expand(batch_size, 1, self.dim)
+            patches = torch.cat([cls_token, patches], dim=1)
 
-        #Add class token?
-        sincos = sin_cos_embedding(patches)
-        patches += sincos
+        patches = patches + sin_cos_embedding(patches)
         #B x n_patches x dim or B x (n_patches +1) x dim if extra token added
         tokens = self.encoder(patches)
 
-        cls_token = tokens[:, 0]
-        tokens = tokens[:, 1:]
-
-        return {
-            'cls_token': cls_token,
-            'tokens': tokens
-        }
+        if not self.use_cls_token:
+            return {
+                'tokens': tokens
+            }
+        else:
+            return {
+                'cls_token': tokens[:, 0],
+                'tokens': tokens[:, 1:]
+            }
 
 
 #Non-learnable constant function
@@ -111,7 +76,7 @@ def patchify(img, patch_size):
     return patches
 
 
-#Learnable embbeding    
+#Learnable embbeding
 class LinearEmbedding(nn.Module):
     def __init__(self, patch_dim: int, hidden_dim: int) -> None:
         super().__init__()
@@ -123,12 +88,7 @@ class LinearEmbedding(nn.Module):
         return projection
 
 
-#Non-learnable position embedding. SinCos?
-def position_embedding(patches: torch.Tensor) -> torch.Tensor:
-    #By the moment don't add positional embedding. TODO
-    raise NotImplementedError("")
-
-
+#FIXME. Current implementation is too slow
 def sin_cos_embedding(patches: torch.Tensor) -> torch.Tensor:
     assert len(patches.shape) == 3, "Expected an input tensor of shape B x n x dim"
     batch_size, n_tokens, dim = patches.shape
@@ -161,6 +121,7 @@ class Encoder(nn.Module):
             tokens = b(tokens)
         
         return tokens
+
 
 #Extra learnable token?
 class Block(nn.Module):
