@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dit_core import (
+from .dit_core import (
     DiTBase,
     Attention,
 )
