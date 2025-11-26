@@ -11,6 +11,12 @@ from src.diffusion import DiffusionSchedule, p_sample_step
 from src.dit import create_dit
 
 
+classes = [
+    'airplane', 'automobile', 'bird', 'cat', 'deer',
+    'dog', 'frog', 'horse', 'ship', 'truck'
+]
+
+
 @torch.no_grad()
 def sample_images(model: nn.Module,
                   vae: AutoencoderKL,
@@ -82,8 +88,8 @@ def sample_images(model: nn.Module,
 
         # guardar imágenes individuales
         for i in range(current_batch):
-            img = imgs[i:i+1]
-            save_path = os.path.join(out_dir, f"sample_{sample_id:05d}.png")
+            img = imgs[i]
+            save_path = os.path.join(out_dir, f"sample_{sample_id:05d}_{classes[y[i]]}.png")
             save_image(img, save_path)
             sample_id += 1
 
@@ -173,6 +179,12 @@ def parse_args():
         default="ema",  # 'mse' o 'ema'
         help="Nombre del VAE SD: 'mse' o 'ema'.",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Semilla manual de torch. Si no se usa, es 'aleatorio'"
+    )
 
     return parser.parse_args()
 
@@ -181,6 +193,8 @@ def main():
     args = parse_args()
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     num_classes = 10  # CIFAR-10
+    if args.seed is not None:
+        torch.manual_seed(args.seed)
 
     # 1) Modelo
     print("Creando modelo DiT...")
