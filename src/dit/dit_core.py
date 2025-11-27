@@ -292,7 +292,7 @@ class DiTBase(nn.Module):
 
     # ---------------------------------------------------------
 
-    def initialize_weights(self):
+    def initialize_weights(self, initialize_embedders: bool=False):
         # init lineal estándar
         def _basic_init(m):
             if isinstance(m, nn.Linear):
@@ -310,6 +310,26 @@ class DiTBase(nn.Module):
         self.pos_embed.data.copy_(
             torch.from_numpy(pos).float().unsqueeze(0)
         )
+    
+        if not initialize_embedders:
+            return
+        #Inicializacion especial realizada para los embedders
+        # 3. [CRÍTICO] Inicialización de PatchEmbed como Linear (estilo ViT oficial)
+        # Tu código actual dejaba esto con init de Conv2d default.
+        w = self.x_embedder.proj.weight.data
+        torch.nn.init.xavier_uniform_(w.view([w.shape[0], -1]))
+        torch.nn.init.constant_(self.x_embedder.proj.bias, 0.0)
+
+        # 4. [CRÍTICO] Inicialización de Label Embedding con varianza baja
+        # Tu código actual usaba default (std=1), esto es muy agresivo.
+        if self.y_embedder is not None:
+            nn.init.normal_(self.y_embedder.embedding_table.weight, std=0.02)
+
+        # 5. [CRÍTICO] Inicialización de Timestep MLP con varianza baja
+        # Tu código actual usaba Xavier.
+        nn.init.normal_(self.t_embedder.mlp[0].weight, std=0.02)
+        nn.init.normal_(self.t_embedder.mlp[2].weight, std=0.02)
+    
 
     # ---------------------------------------------------------
 
