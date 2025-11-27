@@ -95,7 +95,7 @@ class AdaLNZeroFinalLayer(nn.Module):
         )
         self.linear = nn.Linear(
             hidden_size,
-            2 * patch_size * patch_size * out_channels,
+            patch_size * patch_size * out_channels,
         )
         self.adaLN_modulation = nn.Sequential(
             nn.SiLU(),

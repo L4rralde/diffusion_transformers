@@ -20,7 +20,7 @@ def create_dit(model_type: Literal["adaln", "cross", "incontext"],
     patch_size = 2
     in_channels = 4
     class_dropout_prob = 0.1
-    learn_sigma = False
+    learn_sigma = True
 
     kwargs = dict(
         input_size=latent_size,

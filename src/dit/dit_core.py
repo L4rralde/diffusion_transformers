@@ -324,8 +324,8 @@ class DiTBase(nn.Module):
         h = w = int(math.sqrt(N))
         assert h * w == N, "N debe ser cuadrado perfecto"
 
-        x = x.reshape(B, h, w, p, p, 2*C)
+        x = x.reshape(B, h, w, p, p, C)
         # (B, h, w, p, p, C) -> (B, C, h, p, w, p)
         x = x.permute(0, 5, 1, 3, 2, 4)
-        x = x.reshape(B, 2*C, h * p, w * p)
+        x = x.reshape(B, C, h * p, w * p)
         return x

@@ -141,7 +141,7 @@ class CrossAttentionFinalLayer(nn.Module):
         self.norm = nn.LayerNorm(hidden_size, eps=1e-6)
         self.linear = nn.Linear(
             hidden_size,
-            2 * patch_size * patch_size * out_channels,
+            patch_size * patch_size * out_channels,
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
