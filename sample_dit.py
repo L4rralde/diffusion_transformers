@@ -28,6 +28,7 @@ def sample_images(model: nn.Module,
                   num_classes: int,
                   out_dir: str):
     device = next(model.parameters()).device
+
     Path(out_dir).mkdir(parents=True, exist_ok=True)
 
     latent_scaling = 0.18215
@@ -128,7 +129,7 @@ def parse_args():
     parser.add_argument(
         "--num-samples",
         type=int,
-        default=64,
+        default=64, #5_000
         help="Número total de imágenes a generar.",
     )
     parser.add_argument(
@@ -146,7 +147,7 @@ def parse_args():
     parser.add_argument(
         "--out-dir",
         type=str,
-        default="./samples_dit_cifar",
+        default="",
         help="Directorio donde guardar las imágenes generadas.",
     )
     parser.add_argument(
@@ -230,6 +231,8 @@ def main():
 
     # 4) Sampling
     print("Iniciando muestreo...")
+    if args.out_dir == "":
+        args.out_dir = f"{args.model_type}_{os.path.basename(args.ckpt)}_samples"
     sample_images(
         model=model,
         vae=vae,
