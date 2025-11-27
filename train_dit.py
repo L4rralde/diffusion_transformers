@@ -13,7 +13,7 @@ import torch.nn.functional as F
 from diffusers.models import AutoencoderKL
 
 from src.dit import create_dit
-from src.diffusion import DiffusionSchedule
+from src.diffusion import DiffusionSchedule, create_diffusion
 
 
 torch.backends.cuda.matmul.allow_tf32 = True
@@ -114,6 +114,7 @@ def train(args) -> dict:
         num_classes=10,  # CIFAR-10
         device=device,
     )
+    diffusion = create_diffusion()
 
     # 4) EMA
     ema = EMA(model, decay=args.ema_decay)
@@ -161,6 +162,7 @@ def train(args) -> dict:
                 device=device,
             )  # (B,)
 
+            """#Main branch. Simple gaussian diffusion:
             x_t = schedule.q_sample(latents, t, noise)
 
             # 3) Forward del modelo: predice ruido
@@ -168,10 +170,16 @@ def train(args) -> dict:
 
             # 4) Loss MSE entre ruido real y predicho
             loss = F.mse_loss(eps_pred, noise)
+            """
+
+            #OpenAI's diffusion loss
+            model_kwargs = dict(y = labels)
+            loss_dict = diffusion.training_losses(model, latents, t, model_kwargs)
+            loss = loss_dict["loss"].mean()
 
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
+            #torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
             optimizer.step()
             ema.update(model)
 
