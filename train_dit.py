@@ -2,17 +2,22 @@
 import os
 import argparse
 from pathlib import Path
+from collections import defaultdict
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
-from diffusers.models import AutoencoderKL
 import torch.nn.functional as F
+from diffusers.models import AutoencoderKL
 
 from src.dit import create_dit
 from src.diffusion import DiffusionSchedule
+
+
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
 
 
 class EMA:
@@ -56,7 +61,7 @@ def get_cifar10_dataloader(data_dir: str,
         transforms.RandomHorizontalFlip(p=0.5),
         #transforms.CenterCrop(image_size),
         transforms.ToTensor(),
-        transforms.Normalize(0.5, 0.5),
+        transforms.Normalize(0.5, 0.5, inplace=True),
     ])
 
     train_dataset = torchvision.datasets.CIFAR10(
@@ -77,7 +82,7 @@ def get_cifar10_dataloader(data_dir: str,
     return train_loader
 
 
-def train(args):
+def train(args) -> dict:
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     Path(args.results_dir).mkdir(parents=True, exist_ok=True)
 
@@ -126,7 +131,7 @@ def train(args):
         model.parameters(),
         lr=args.lr,
         betas=(0.9, 0.999),
-        weight_decay=1e-4,
+        weight_decay=0,
     )
 
     # 7) Loop de entrenamiento
@@ -134,6 +139,8 @@ def train(args):
     total_steps = args.epochs * len(train_loader)
     print(f"Comenzando entrenamiento por {args.epochs} epochs "
           f"({total_steps} iteraciones)...")
+
+    train_stats = defaultdict(list)
 
     model.train()
     for epoch in range(args.epochs):
@@ -176,6 +183,9 @@ def train(args):
                     f"Step {global_step}/{total_steps} "
                     f"Loss: {loss.item():.4f}"
                 )
+                train_stats['epoch'].append(epoch)
+                train_stats['step'].append(global_step)
+                train_stats['loss'].append(loss.item())
 
         if epoch % 10 != 9:
             continue
@@ -221,6 +231,7 @@ def train(args):
         print(f"Guardados checkpoints en {ckpt_path} y {ema_ckpt_path}")
 
     print("Entrenamiento finalizado.")
+    return train_stats
 
 
 def parse_args():
@@ -256,7 +267,7 @@ def parse_args():
     parser.add_argument(
         "--lr",
         type=float,
-        default=1e-4,
+        default=1e-4, #Constante en el paper
         help="Learning rate del AdamW.",
     )
     parser.add_argument(
