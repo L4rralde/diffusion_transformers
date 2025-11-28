@@ -69,7 +69,7 @@ def main():
 
     dataset = torchvision.datasets.CIFAR10(
         root='data',
-        train=True,
+        train=False,
         download=True,
         transform=transform,
     )
