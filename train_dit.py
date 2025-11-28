@@ -11,6 +11,7 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 from diffusers.models import AutoencoderKL
+import numpy as np
 
 from src.dit import create_dit
 from src.diffusion import DiffusionSchedule
@@ -247,6 +248,12 @@ def train(args) -> dict:
         print(f"Guardados checkpoints en {ckpt_path} y {ema_ckpt_path}")
 
     print("Entrenamiento finalizado.")
+    stats_path = os.path.join(
+        args.results_dir,
+        f"dit_{args.model_type}_training_stats.npz"
+    )
+    print(f"Guardando estadísticas de entrenamiento en: {stats_path}")
+    np.savez(stats_path, **train_stats)
     return train_stats
 
 
