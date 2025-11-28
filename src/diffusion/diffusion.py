@@ -9,12 +9,13 @@ class DiffusionSchedule:
                  beta_end: float = 0.02,
                  device: torch.device = torch.device("cpu")):
         self.num_steps = num_steps
-        betas = torch.linspace(beta_start, beta_end, num_steps, device=device)
-        alphas = 1.0 - betas
-        alpha_bars = torch.cumprod(alphas, dim=0)
+        betas = torch.linspace(beta_start, beta_end, num_steps, device=device) #variance schedule: [0.0001, ..., 0.02]. shape = [1000]
+        alphas = 1.0 - betas # Shape = [1000]
+        alpha_bars = torch.cumprod(alphas, dim=0) #\bar{alpha}_t = alpha_1 * alpha_2 * ... * alpha_t.
+                                                    #Vector de [\bar{alpha}_1, \bar{alpha}_2, ..., \bar{alpha}_{T=1000}]
 
         self.betas = betas
-        self.alphas = alphas
+        self.alphas = alphas    
         self.alpha_bars = alpha_bars
 
     def sample_timesteps(self, batch_size: int, device: torch.device) -> torch.Tensor:
@@ -24,10 +25,11 @@ class DiffusionSchedule:
             size=(batch_size,),
             device=device,
             dtype=torch.long,
-        )
+        ) #shape = [B]. Vector de B números entre 0 y 1000
 
     def q_sample(self, x0: torch.Tensor, t: torch.Tensor, noise: torch.Tensor):
         """
+        Forward proccess o diffusion process (agrega ruido a una imagen)
         x_t = sqrt(alpha_bar_t) * x0 + sqrt(1 - alpha_bar_t) * noise
         """
         # t: (B,)
@@ -54,6 +56,7 @@ def p_sample_step(model: nn.Module,
                   cfg_scale: float,
                   num_classes: int) -> torch.Tensor:
     """
+    Reverse process.
     Un paso de muestreo p(x_{t-1} | x_t) con DDPM y CFG.
 
     x_t: (B, 4, H/8, W/8)
@@ -65,11 +68,11 @@ def p_sample_step(model: nn.Module,
     B = x_t.shape[0]
 
     # Classifier-free guidance: cond + uncond en un solo forward.
-    if cfg_scale is not None and cfg_scale != 1.0:
+    if cfg_scale is not None and cfg_scale != 1.0: #Con guidance
         # etiquetas condicionales
         y_cond = y
         # etiquetas "null" (el último índice es el null token)
-        y_null = torch.full_like(y, num_classes, device=device)
+        y_null = torch.full_like(y, num_classes, device=device) #[10, 10, ...] shape = [B]
         x_in = torch.cat([x_t, x_t], dim=0)
         t_in = torch.cat([t, t], dim=0)
         y_in = torch.cat([y_cond, y_null], dim=0)
@@ -77,13 +80,13 @@ def p_sample_step(model: nn.Module,
         eps = model(x_in, t_in, y_in)  # (2B, 4, H/8, W/8)
         eps_cond, eps_uncond = eps.chunk(2, dim=0)
         eps_theta = eps_uncond + cfg_scale * (eps_cond - eps_uncond)
-    else:
+    else: #Sin guidance
         eps_theta = model(x_t, t, y)
 
     alpha_t, alpha_bar_t, beta_t = schedule.get_step_params(t)
 
     # Ecuación DDPM para la media de p_theta(x_{t-1} | x_t)
-    # mu_t = 1/sqrt(alpha_t) * (x_t - (1-alpha_t)/sqrt(1-alpha_bar_t) * eps_theta)
+    # mu_t = 1/sqrt(alpha_t) * (x_t - (1-alpha_t = beta)/sqrt(1-alpha_bar_t) * eps_theta)
     mu_t = (1.0 / torch.sqrt(alpha_t)) * (
         x_t - (beta_t / torch.sqrt(1.0 - alpha_bar_t)) * eps_theta
     )

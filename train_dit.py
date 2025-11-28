@@ -159,15 +159,16 @@ def train(args) -> dict:
             t = schedule.sample_timesteps(
                 batch_size=latents.shape[0],
                 device=device,
-            )  # (B,)
+            )  # (B,). Beta numbers from 0 to num_time_steps=1000
 
+            #Diffusion step. x_t = \sqrt{\bar \alpha_t x_0} + noise * \sqrt{1 - \bar \alpha_t }
             x_t = schedule.q_sample(latents, t, noise)
 
             # 3) Forward del modelo: predice ruido
-            eps_pred = model(x_t, t, labels)
+            eps_pred = model(x_t, t, labels) #eps_\theta (x_t)
 
             # 4) Loss MSE entre ruido real y predicho
-            loss = F.mse_loss(eps_pred, noise)
+            loss = F.mse_loss(eps_pred, noise) # L = mean[ (e_t - eps_\theta (x_t))^2 ]
 
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
