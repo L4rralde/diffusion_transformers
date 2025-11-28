@@ -210,6 +210,13 @@ def train(args) -> dict:
             ckpt_path,
         )
 
+        last_ckpt_path = os.path.join(args.results_dir, 'dit_last.pt')
+        try:
+            os.remove(last_ckpt_path)
+        except OSError:
+            pass
+        os.symlink(os.path.realpath(ckpt_path), last_ckpt_path)
+
         # Guardar versión EMA de los pesos
         ema_model = create_dit(
             model_type=args.model_type,
@@ -226,6 +233,14 @@ def train(args) -> dict:
             },
             ema_ckpt_path,
         )
+
+        last_ema_path = os.path.join(args.results_dir, 'dit_last_ema.pt')
+        try:
+            os.remove(last_ema_path)
+        except OSError:
+            pass
+        os.symlink(os.path.realpath(ema_ckpt_path), last_ema_path)
+
         del ema_model
         torch.cuda.empty_cache()
         print(f"Guardados checkpoints en {ckpt_path} y {ema_ckpt_path}")
