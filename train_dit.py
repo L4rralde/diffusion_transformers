@@ -284,7 +284,7 @@ def parse_args():
     parser.add_argument(
         "--epochs",
         type=int,
-        default=50,
+        default=100,
         help="Número de epochs.",
     )
     parser.add_argument(
