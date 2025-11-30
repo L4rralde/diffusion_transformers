@@ -363,7 +363,7 @@ def parse_args():
         help="Máximo L2 de gradiente (clipping).",
     )
     parser.add_argument(
-        "--patch_size",
+        "--patch-size",
         type=int,
         default=2,
         help="Tamano de parche. Por default 2 (2x2)",
