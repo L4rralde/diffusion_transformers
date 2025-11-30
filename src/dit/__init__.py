@@ -11,13 +11,14 @@ from .dit_in_context import DiT_InContext
 def create_dit(model_type: Literal["adaln", "cross", "incontext"],
                image_size: int,
                num_classes: int,
+               patch_size: int = 2,
                device: torch.device = torch.device("cpu")) -> nn.Module:
     latent_size = image_size // 8
 
     hidden_size = 384
     depth = 12
     num_heads = 6
-    patch_size = 2
+    patch_size = patch_size
     in_channels = 4
     class_dropout_prob = 0.1
     learn_sigma = False

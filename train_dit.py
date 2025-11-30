@@ -113,6 +113,7 @@ def train(args) -> dict:
         model_type=args.model_type,
         image_size=args.image_size,
         num_classes=10,  # CIFAR-10
+        patch_size=args.patch_size,
         device=device,
     )
 
@@ -224,6 +225,7 @@ def train(args) -> dict:
             model_type=args.model_type,
             image_size=args.image_size,
             num_classes=10,
+            patch_size=args.patch_size,
             device=device,
         )
         ema.copy_to(ema_model)
@@ -360,10 +362,17 @@ def parse_args():
         default=1.0,
         help="Máximo L2 de gradiente (clipping).",
     )
+    parser.add_argument(
+        "--patch_size",
+        type=int,
+        default=2,
+        help="Tamano de parche. Por default 2 (2x2)",
+    )
 
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
+    print(args.patch_size)
     train(args)
