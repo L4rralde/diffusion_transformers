@@ -186,6 +186,11 @@ def parse_args():
         default=None,
         help="Semilla manual de torch. Si no se usa, es 'aleatorio'"
     )
+    parser.add_argument(
+        "--patch-size",
+        type=int,
+        default=2
+    )
 
     return parser.parse_args()
 
@@ -203,6 +208,7 @@ def main():
         model_type=args.model_type,
         image_size=args.image_size,
         num_classes=num_classes,
+        patch_size=args.patch_size,
         device=device,
     )
 
