@@ -1,10 +1,16 @@
-# Generacion de imagenes 64x64 CIFAR-10 con Diffusion Transformer DiT-S
+# Generación de imágenes 64x64 CIFAR-10 con Diffusion Transformer DiT-S
 
 <div align="center">
 <img src="https://github.com/L4rralde/diffusion_transformers/blob/main/docs/image.jpg" width="600"/>
 </div>
 
-## Instalacion
+
+## Reporte técnico
+
+Puedes leer el reporte técnico en español en el siguiente [enlace](../proyecto_generativos_2.pdf)
+
+
+## Instalación
 
 ```sh
 git clone --recursive https://github.com/L4rralde/diffusion_transformers.git
@@ -41,7 +47,7 @@ O puedes descargar nuestros *checkpoints*:
 - [dit_cross_epoch100_ema.pt](https://github.com/L4rralde/diffusion_transformers/releases/download/weights/dit_cross_epoch100_ema.pt)
 - [dit_incontext_epoch100_ema.pt](https://github.com/L4rralde/diffusion_transformers/releases/download/weights/dit_incontext_epoch100_ema.pt)
 
-## Evaluacion
+## Evaluación
 
 ### Genera muestras para evaluación
 
@@ -59,15 +65,15 @@ python samples_to_npz.py --image-folder outputs/<model_type>/samples --num-sampl
 
 ### Obtén métricas de generación
 
-**Primero** Instala dependencias para el script de evaluacion:
+**Primero** Instala dependencias para el script de evaluación:
 
 ```sh
 pip install -r eval_requirements.txt
 ```
 
-Tambien **es necesario** descargar el [archivo de referencia](https://github.com/L4rralde/diffusion_transformers/releases/download/cifar10_test.npz/ref_cifar10.npz)
+También **es necesario** descargar el [archivo de referencia](https://github.com/L4rralde/diffusion_transformers/releases/download/cifar10_test.npz/ref_cifar10.npz)
 
-Script de evaluacion:
+Script de evaluación:
 
 
 ```sh
